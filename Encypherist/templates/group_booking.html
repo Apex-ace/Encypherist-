@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Group Booking - {{ event.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .header-text { color: var(--accent-primary); }
+        .form-input, .form-select {
+            background-color: #010409;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+        select.form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238b949e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(88, 166, 255, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="relative">
+    <div class="container mx-auto px-6 py-12">
+        <div class="panel p-8 max-w-4xl mx-auto">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold mb-2 header-text">{{ event.title }}</h1>
+                <p class="text-gray-400">{{ event.description }}</p>
+                <div class="mt-4 flex items-center space-x-4">
+                    <div class="text-xl font-semibold">
+                        ₹{{ "%.2f"|format(event.price) }} per person
+                    </div>
+                    {% if event.group_discount_percentage > 0 %}
+                        <span class="badge">
+                            {{ event.group_discount_percentage }}% Group Discount
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-6">
+                    <label class="block text-gray-400 mb-2">Group Size</label>
+                    <select name="group_size" id="groupSize" class="form-select max-w-xs" required>
+                        {% for i in range(event.min_group_size, event.max_group_size + 1) %}
+                            <option value="{{ i }}">{{ i }} members</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="memberForms" class="space-y-6">
+                    </div>
+
+                <div class="border-t border-gray-800 pt-6 mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-lg">Total Amount:</span>
+                        <div id="totalAmount" class="text-2xl font-bold header-text">
+                            ₹{{ "%.2f"|format(event.price) }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Book Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function createMemberForm(index) {
+            return `
+                <div class="panel p-6" id="member_${index}">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-400">
+                        ${index === 0 ? 'Group Leader' : `Member ${index + 1}`}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" name="member_name_${index}" class="form-input" required placeholder="Full Name"
+                               ${index === 0 ? `value="{{ current_user.username }}" readonly` : ''}>
+                        <input type="email" name="member_email_${index}" class="form-input" required placeholder="Email Address">
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateMemberForms() {
+            const groupSize = parseInt(document.getElementById('groupSize').value);
+            const memberForms = document.getElementById('memberForms');
+            memberForms.innerHTML = '';
+            for (let i = 0; i < groupSize; i++) {
+                memberForms.innerHTML += createMemberForm(i);
+            }
+            updateTotalAmount();
+        }
+
+        function updateTotalAmount() {
+            const groupSize = parseInt(document.getElementById('groupSize').value);
+            const basePrice = {{ event.price }};
+            const discountPercentage = {{ event.group_discount_percentage }};
+            const totalPrice = basePrice * groupSize * (1 - discountPercentage/100);
+            document.getElementById('totalAmount').textContent = '₹' + totalPrice.toFixed(2);
+        }
+
+        document.getElementById('groupSize').addEventListener('change', updateMemberForms);
+        updateMemberForms();
+    </script>
+</body>
+</html>

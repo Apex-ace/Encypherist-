@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.fog.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+            --accent-danger: #f85149;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        #vanta-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: 0;
+        }
+        .panel {
+            background-color: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            position: relative;
+            z-index: 1;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .accent-text { color: var(--accent-primary); }
+        .form-input {
+            background-color: #010409;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid var(--border-primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+            font-weight: 600;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div id="vanta-bg"></div>
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ url_for('landing') }}" class="text-2xl font-bold header-text">Encypherist</a>
+                <a href="{{ url_for('landing') }}" class="text-sm text-gray-400 hover:text-white transition-colors">← Back to Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="min-h-screen flex items-center justify-center px-4 pt-16">
+        <div class="panel w-full max-w-md p-6 sm:p-8">
+            <h2 class="text-2xl font-bold mb-6 text-center header-text">Welcome Back!</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-3 rounded-md {{ 'bg-red-900/50 border-red-500 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }} text-center text-sm">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div>
+                    <label for="username" class="sr-only">Email</label>
+                    <input type="email" id="username" name="username" required
+                           class="form-input"
+                           placeholder="Enter your email address">
+                </div>
+                
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input type="password" id="password" name="password" required
+                           class="form-input"
+                           minlength="6"
+                           placeholder="Enter your password">
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center text-gray-400">
+                        <input type="checkbox" name="remember" class="mr-2 bg-gray-900 border-gray-600 rounded text-accent-primary focus:ring-accent-primary">
+                        Remember me
+                    </label>
+                    <a href="{{ url_for('forgot_password') }}" class="accent-text hover:underline">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full !mt-6">Login</button>
+            </form>
+
+            <p class="mt-8 text-center text-sm text-gray-500">
+                Don't have an account? 
+                <a href="{{ url_for('register') }}" class="accent-text hover:underline">Register here</a>
+            </p>
+        </div>
+    </main>
+
+    <script>
+        VANTA.FOG({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            highlightColor: 0x2d4fa6,
+            midtoneColor: 0x234891,
+            lowlightColor: 0x161b22,
+            baseColor: 0x0D1117,
+            blurFactor: 0.50,
+            speed: 1.20,
+            zoom: 0.40
+        })
+    </script>
+</body>
+</html>

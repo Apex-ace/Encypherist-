@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Edit Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid var(--border-primary);
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+            font-weight: 600;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .btn-secondary {
+            background-color: #21262d;
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover { border-color: var(--text-secondary); }
+        .profile-picture {
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--border-primary);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+     <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ url_for('home') }}" class="text-2xl font-bold header-text">Encypherist</a>
+                <a href="{{ url_for('profile') }}" class="text-sm text-gray-400 hover:text-white transition">← Back to Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-md {{ 'bg-red-900/50 border-red-600 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }} text-center text-sm max-w-2xl mx-auto">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="panel p-6 sm:p-8 max-w-2xl mx-auto">
+            <h2 class="text-xl font-bold mb-6 header-text">Edit Profile</h2>
+
+            <form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) if user.profile_picture else 'https://www.gravatar.com/avatar/0?d=mp' }}"
+                             alt="Profile Picture"
+                             class="profile-picture mx-auto mb-4"
+                             id="preview-image">
+                        
+                        <label class="btn btn-secondary">
+                            <input type="file" name="profile_picture" class="hidden" accept="image/*" onchange="previewImage(this)">
+                            Change Picture
+                        </label>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-end space-y-4 sm:space-y-0 sm:space-x-4 pt-4 border-t border-gray-800">
+                        <a href="{{ url_for('profile') }}" class="btn btn-secondary text-center">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-image').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+</body>
+</html>

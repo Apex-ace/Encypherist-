@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist - Event Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+        .status-approved {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        .status-rejected {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ url_for('admin_dashboard') }}" class="text-2xl font-bold header-text">Admin</a>
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{{ url_for('admin_events') }}" class="text-sm text-white font-semibold">Events</a>
+                    <a href="{{ url_for('admin_users') }}" class="text-sm text-gray-300 hover:text-white transition">Users</a>
+                    <a href="{{ url_for('activity_log') }}" class="text-sm text-gray-300 hover:text-white transition">Activity Log</a>
+                    <a href="{{ url_for('home') }}" class="text-sm text-gray-300 hover:text-white transition">View Site</a>
+                    <form action="{{ url_for('logout') }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-sm text-gray-300 hover:text-white transition">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-md {{ 'bg-red-900/50 border-red-600 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }} text-center">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="panel p-4 sm:p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <h2 class="text-2xl font-bold header-text mb-4 sm:mb-0">Event Management</h2>
+                <a href="{{ url_for('generate_report') }}?type=events" class="btn-primary">Generate Report</a>
+            </div>
+
+            <!-- Events List for Mobile -->
+            <div class="md:hidden space-y-4">
+                {% for event in events %}
+                <div class="panel p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="font-semibold">{{ event.title }}</p>
+                        <span class="status-badge status-{{ event.status }}">{{ event.status.title() }}</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-1">{{ event.location }}</p>
+                    <p class="text-sm text-gray-400 mb-3">{{ event.date.strftime('%b %d, %Y @ %H:%M') }}</p>
+                    <div class="text-sm text-gray-300 space-y-1 mb-4">
+                        <p><span class="font-medium text-gray-500">Organizer:</span> {{ event.organizer.username }}</p>
+                        <p><span class="font-medium text-gray-500">Tickets:</span> {{ event.remaining_tickets }}/{{ event.total_tickets }}</p>
+                        <p><span class="font-medium text-gray-500">Category:</span> {{ event.category }}</p>
+                    </div>
+                    <div class="flex items-center space-x-4 pt-3 border-t border-gray-800">
+                        {% if event.status == 'pending' %}
+                        <form action="{{ url_for('approve_event', event_id=event.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-sm text-green-400 hover:text-green-300">Approve</button>
+                        </form>
+                        <form action="{{ url_for('reject_event', event_id=event.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-sm text-red-400 hover:text-red-300">Reject</button>
+                        </form>
+                        {% endif %}
+                        <form action="{{ url_for('admin_delete_event', event_id=event.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-sm text-red-400 hover:text-red-300" onclick="return confirm('Are you sure you want to delete this event?')">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 py-8">No events found.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Events Table for Desktop -->
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left border-b border-gray-800">
+                            <th class="pb-3 px-2 font-medium text-gray-400">Event</th>
+                            <th class="pb-3 px-2 font-medium text-gray-400">Organizer</th>
+                            <th class="pb-3 px-2 font-medium text-gray-400">Status</th>
+                            <th class="pb-3 px-2 font-medium text-gray-400">Tickets</th>
+                            <th class="pb-3 px-2 font-medium text-gray-400">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-800">
+                        {% for event in events %}
+                        <tr class="hover:bg-white/5">
+                            <td class="py-3 px-2">
+                                <div>
+                                    <p class="font-semibold">{{ event.title }}</p>
+                                    <p class="text-xs text-gray-400">{{ event.location }} &middot; {{ event.date.strftime('%b %d, %Y') }}</p>
+                                </div>
+                            </td>
+                            <td class="py-3 px-2">{{ event.organizer.username }}</td>
+                            <td class="py-3 px-2">
+                                <span class="status-badge status-{{ event.status }}">{{ event.status.title() }}</span>
+                            </td>
+                            <td class="py-3 px-2">{{ event.remaining_tickets }}/{{ event.total_tickets }}</td>
+                            <td class="py-3 px-2">
+                                <div class="flex items-center space-x-4">
+                                    {% if event.status == 'pending' %}
+                                    <form action="{{ url_for('approve_event', event_id=event.id) }}" method="POST" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="text-green-400 hover:text-green-300">Approve</button>
+                                    </form>
+                                    <form action="{{ url_for('reject_event', event_id=event.id) }}" method="POST" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="text-red-400 hover:text-red-300">Reject</button>
+                                    </form>
+                                    {% endif %}
+                                    <form action="{{ url_for('admin_delete_event', event_id=event.id) }}" method="POST" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="text-red-400 hover:text-red-300" onclick="return confirm('Are you sure you want to delete this event?')">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-gray-500">No events found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

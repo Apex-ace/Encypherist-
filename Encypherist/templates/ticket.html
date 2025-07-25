@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Ticket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .header-text { color: var(--accent-primary); }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            text-align: center;
+            border: 1px solid var(--border-primary);
+            background-color: #21262d;
+            color: var(--text-primary);
+        }
+        @media print {
+            body { background: white; color: black; }
+            .panel { border: 1px solid #ccc; box-shadow: none; }
+            .no-print { display: none; }
+            .header-text { color: black; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <main class="max-w-xl mx-auto px-4 pt-12 pb-12">
+        <div class="panel p-8">
+            <div class="text-center mb-8 border-b border-gray-800 pb-6">
+                <h2 class="text-3xl font-bold header-text mb-2">Event Ticket</h2>
+                <p class="text-gray-400">{{ event.title }}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div>
+                    <h3 class="text-gray-500 text-sm uppercase tracking-wider mb-2">Attendee</h3>
+                    <p class="font-semibold">{{ booking.name }}</p>
+                </div>
+                <div>
+                    <h3 class="text-gray-500 text-sm uppercase tracking-wider mb-2">Date & Time</h3>
+                    <p class="font-semibold">{{ event.date.strftime('%b %d, %Y @ %I:%M %p') }}</p>
+                </div>
+            </div>
+
+            <div class="text-center my-8">
+                <p class="text-sm text-gray-400 mb-4">Present this code at the event entrance</p>
+                <div class="p-4 bg-white rounded-md inline-block">
+                    <img src="{{ qr_code }}" alt="Ticket QR Code" class="w-48 h-48">
+                </div>
+            </div>
+            
+            <div class="text-center text-xs text-gray-500 border-t border-gray-800 pt-6">
+                <p>Booking Reference: #{{ booking.id }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-8 no-print">
+            <a href="{{ ticket_pdf_url }}" class="btn" download>Download PDF</a>
+            <button onclick="window.print()" class="btn">Print Ticket</button>
+        </div>
+    </main>
+</body>
+</html>

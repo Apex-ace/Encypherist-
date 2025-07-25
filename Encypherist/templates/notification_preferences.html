@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .form-input {
+            background-color: #010409;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            width: 100%;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .settings-nav-item.active {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-left-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-primary);
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--accent-primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ url_for('home') }}" class="text-2xl font-bold header-text">Encypherist</a>
+                <a href="{{ url_for('profile') }}" class="text-sm text-gray-400 hover:text-white transition">← Back to Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        <div class="panel">
+            <div class="flex flex-col md:flex-row">
+                <div class="w-full md:w-1/4 border-b md:border-b-0 md:border-r border-gray-800 p-6">
+                    <h2 class="text-lg font-semibold mb-6">Settings</h2>
+                    <div class="space-y-1 text-sm">
+                        <a href="#" class="settings-nav-item active block p-3 rounded border-l-2 border-transparent">Notifications</a>
+                        <a href="{{ url_for('edit_profile') }}" class="settings-nav-item block p-3 rounded border-l-2 border-transparent hover:bg-gray-800">Profile</a>
+                        <a href="{{ url_for('reset_password') }}" class="settings-nav-item block p-3 rounded border-l-2 border-transparent hover:bg-gray-800">Security</a>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-3/4 p-6 sm:p-8">
+                    <form method="POST" action="{{ url_for('notification_preferences') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="space-y-8">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4 header-text">Notification Preferences</h3>
+                                <div class="space-y-4 panel p-4">
+                                    {% set preferences = {'email_notifications': 'Email Notifications', 'sms_notifications': 'SMS Notifications', 'event_updates': 'Event Updates', 'event_reminders': 'Event Reminders', 'messages': 'New Messages'} %}
+                                    {% for key, value in preferences.items() %}
+                                    <div class="flex items-center justify-between">
+                                        <label for="{{ key }}" class="font-medium">{{ value }}</label>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="{{ key }}" name="{{ key }}" {% if preferences[key] %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4 header-text">Contact Information</h3>
+                                <div class="space-y-4 panel p-4">
+                                    <div>
+                                        <label for="email" class="block text-sm font-medium text-gray-400 mb-2">Email for Notifications</label>
+                                        <input type="email" id="email" name="email" value="{{ preferences.email or '' }}" class="form-input" placeholder="your.email@example.com">
+                                    </div>
+                                    <div>
+                                        <label for="phone" class="block text-sm font-medium text-gray-400 mb-2">Phone for SMS</label>
+                                        <input type="tel" id="phone" name="phone" value="{{ preferences.phone or '' }}" class="form-input" placeholder="+1234567890">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-6 border-t border-gray-800">
+                                <button type="submit" class="btn-primary">Save Changes</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

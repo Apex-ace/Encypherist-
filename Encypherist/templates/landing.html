@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: A Collaborative Learning Community</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+        #vanta-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: -1;
+        }
+        .panel {
+            background-color: rgba(22, 27, 34, 0.8); /* Slightly more transparent */
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border-color: var(--accent-primary);
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .accent-text { 
+            color: var(--accent-primary); 
+            text-shadow: 0 0 15px rgba(88, 166, 255, 0.5);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid var(--border-primary);
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
+        }
+        .btn-primary:hover { background-color: #80baff; transform: translateY(-2px); box-shadow: 0 6px 25px rgba(88, 166, 255, 0.5); }
+        .btn-secondary {
+            background-color: #21262d;
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover { border-color: var(--text-secondary); transform: translateY(-2px); }
+        .feature-card {
+            background-color: transparent;
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            background-color: var(--bg-secondary);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+
+    <div class="relative z-10">
+        <nav class="fixed w-full z-50 nav-bar">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <a href="/" class="text-2xl font-bold accent-text">Encypherist</a>
+                    
+                    <!-- Desktop Buttons -->
+                    <div class="hidden md:flex items-center space-x-4">
+                        <a href="{{ url_for('login') }}" class="btn btn-secondary text-sm">Login</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary text-sm">Join Now</a>
+                    </div>
+
+                    <!-- Mobile Buttons -->
+                    <div class="md:hidden flex items-center space-x-2">
+                        <a href="{{ url_for('login') }}" class="btn btn-secondary text-sm !px-3" aria-label="Login">
+                            <i class="fas fa-sign-in-alt"></i>
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary text-sm !px-3" aria-label="Join Now">
+                            <i class="fas fa-user-plus"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <header class="min-h-screen flex items-center pt-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl md:text-7xl font-bold leading-tight max-w-4xl mx-auto">
+                    Where <span class="accent-text">Code</span> Comes to Life
+                </h1>
+                <p class="text-lg text-gray-400 max-w-2xl mx-auto mt-6">
+                    A universe of challenges, events, and collaboration awaits. Built for students who aspire to innovate and lead the future of technology.
+                </p>
+                <div class="mt-10">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary text-lg px-10 py-4">Launch Your Journey</a>
+                </div>
+            </div>
+        </header>
+
+        <section id="featured-events" class="py-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">Featured Events</h2>
+                    <p class="text-md text-gray-400 max-w-2xl mx-auto mt-4">Don't miss out on our upcoming workshops and competitions.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    {% for event in featured_events %}
+                    <div class="panel p-6 flex flex-col">
+                        <h3 class="text-xl font-bold mb-2 accent-text">{{ event.title }}</h3>
+                        <p class="text-sm text-gray-400 mb-4"><i class="far fa-calendar-alt mr-2"></i>{{ event.date.strftime('%B %d, %Y') }}</p>
+                        <p class="text-gray-400 flex-grow">{{ event.description[:100] }}...</p>
+                        <div class="mt-6">
+                             <a href="{{ url_for('book_event', event_id=event.id) }}" class="btn btn-secondary w-full text-sm">Learn More</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="md:col-span-3 text-center text-gray-500">No upcoming featured events. Check back soon!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section id="why-us" class="py-20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">Why Encypherist?</h2>
+                    <p class="text-md text-gray-400 max-w-2xl mx-auto mt-4">A platform built for student developers, by student developers.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    <div class="feature-card">
+                        <div class="text-5xl accent-text mb-4"><i class="fas fa-laptop-code"></i></div>
+                        <h3 class="text-xl font-bold mb-2">Exclusive Events</h3>
+                        <p class="text-gray-400">Access workshops, hackathons, and talks from industry experts tailored for students.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="text-5xl accent-text mb-4"><i class="fas fa-users"></i></div>
+                        <h3 class="text-xl font-bold mb-2">Build Your Network</h3>
+                        <p class="text-gray-400">Connect with peers, find project collaborators, and meet mentors from top tech companies.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="text-5xl accent-text mb-4"><i class="fas fa-trophy"></i></div>
+                        <h3 class="text-xl font-bold mb-2">Showcase Your Skills</h3>
+                        <p class="text-gray-400">Participate in coding challenges and build a portfolio that stands out to recruiters.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="testimonials" class="py-20 bg-gray-900/20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold">From Our Community</h2>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="panel p-8">
+                        <p class="text-gray-400 mb-6">Encypherist is an inspiring student-driven initiative under the Department of Computer Science & Engineering. It is dedicated to equipping students with cutting-edge knowledge and practical skills in artificial intelligence, machine learning, and advanced computing technologies.</p>
+                        <div class="flex items-center">
+                            <img class="w-12 h-12 rounded-full mr-4 border-2 border-gray-700" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSs8u4lB2C6Du_0QDXXT5s0cyNPO71DT-8nhzrjr1a8auiScgikiuMHxrU&s=10" alt="Avatar of person">
+                            <div>
+                                <p class="font-semibold">Dr. Uma Patel Thakur</p>
+                                <p class="text-sm text-gray-500">HOD CSE</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel p-8">
+                        <p class="text-gray-400 mb-6">Encypherist is a student-driven community dedicated to advancing skills in computer science, artificial intelligence, and machine learning. It provides a collaborative platform for students to learn emerging technologies, exchange ideas, and work on real-world projects.</p>
+                        <div class="flex items-center">
+                            <img class="w-12 h-12 rounded-full mr-4 border-2 border-gray-700" src="https://raw.githubusercontent.com/Apex-ace/Images/refs/heads/main/image.png" alt="Avatar of person">
+                            <div>
+                                <p class="font-semibold">Mitali Ingle</p>
+                                <p class="text-sm text-gray-500">Faculty Advisor</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel p-8 md:col-span-2 lg:col-span-1">
+                        <p class="text-gray-400 mb-6">Encypherist is a dynamic student-led community that focuses on exploring and mastering the fields of computer science, artificial intelligence (AI), and machine learning (ML).                                                                              </p>
+                        <div class="flex items-center">
+                            <img class="w-12 h-12 rounded-full mr-4 border-2 border-gray-700" src="https://raw.githubusercontent.com/Apex-ace/Images/refs/heads/main/WhatsApp%20Image%202025-07-17%20at%2023.07.27_88f05d40.jpg" alt="Avatar of person">
+                            <div>
+                                <p class="font-semibold">Ayush Mishra</p>
+                                <p class="text-sm text-gray-500">Technical Head(2025)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="py-8 border-t border-gray-800 mt-20">
+            <div class="container mx-auto px-6 text-center text-gray-500 text-sm">
+                <p>&copy; 2025 Encypherist. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        VANTA.WAVES({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x1a2c4a,
+            shininess: 25.00,
+            waveHeight: 15.00,
+            waveSpeed: 0.75,
+            zoom: 0.85
+        });
+    </script>
+</body>
+</html>

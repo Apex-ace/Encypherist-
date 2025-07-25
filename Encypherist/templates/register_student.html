@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Student Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .header-text { color: var(--accent-primary); }
+        .form-input {
+            background-color: #010409;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid var(--border-primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+            font-weight: 600;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .btn-secondary {
+            background-color: #21262d;
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover { border-color: var(--text-secondary); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="panel p-6 sm:p-8 rounded-lg w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold mb-2 header-text">Student Registration</h1>
+            <p class="text-gray-400">Create your account to start your journey</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="mb-6 p-3 rounded-md {{ 'bg-red-900/50 border-red-500 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }} text-sm text-center">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('register_student') }}" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div>
+                <label for="full_name" class="block text-sm font-medium mb-2 text-gray-400">Full Name</label>
+                <input type="text" id="full_name" name="full_name" required 
+                       class="form-input" placeholder="Enter your full name">
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-medium mb-2 text-gray-400">Email Address</label>
+                <input type="email" id="email" name="email" required 
+                       class="form-input" placeholder="Enter your email">
+            </div>
+
+            <div>
+                <label for="college_name" class="block text-sm font-medium mb-2 text-gray-400">College Name</label>
+                <input type="text" id="college_name" name="college_name" required 
+                       class="form-input" placeholder="Enter your college name">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium mb-2 text-gray-400">Password</label>
+                <input type="password" id="password" name="password" required 
+                       class="form-input" placeholder="Create a password"
+                       pattern=".{8,}" title="Password must be at least 8 characters long">
+            </div>
+
+            <div>
+                <label for="confirm_password" class="block text-sm font-medium mb-2 text-gray-400">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" required 
+                       class="form-input" placeholder="Confirm your password">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full !mt-8">Register</button>
+        </form>
+
+        <div class="mt-6">
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-800"></div></div>
+                <div class="relative flex justify-center text-sm"><span class="px-2 bg-gray-800 text-gray-500">Or</span></div>
+            </div>
+
+            <a href="{{ url_for('google_login') }}" class="btn btn-secondary mt-6">
+                <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5">
+                Continue with Google
+            </a>
+        </div>
+
+        <p class="mt-8 text-center text-sm text-gray-500">
+            Already have an account? 
+            <a href="{{ url_for('login') }}" class="text-blue-400 hover:underline">Login here</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            if (this.value !== document.getElementById('password').value) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    </script>
+</body>
+</html>

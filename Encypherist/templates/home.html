@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+            --accent-danger: #f85149;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        #vanta-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: 0;
+        }
+        .panel {
+            background-color: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .form-input, .form-select {
+            background-color: #010409;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238b949e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid var(--border-primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .btn-danger-outline {
+            color: var(--accent-danger);
+            border-color: var(--accent-danger);
+        }
+        .btn-danger-outline:hover {
+            background-color: var(--accent-danger);
+            color: white;
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-approved { background-color: rgba(63, 185, 80, 0.1); color: #3fb950; }
+        .status-pending { background-color: rgba(210, 153, 34, 0.1); color: #d29922; }
+        .status-rejected { background-color: rgba(248, 81, 73, 0.1); color: #f85149; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div id="vanta-bg"></div>
+    <div class="relative z-10">
+        <nav class="fixed w-full z-50 nav-bar">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <a href="{{ url_for('home') }}" class="text-2xl font-bold header-text">Encypherist</a>
+                    <div class="flex items-center space-x-4">
+                        <a href="{{ url_for('messages') }}" class="text-sm text-gray-300 hover:text-white transition">Messages</a>
+                        <div class="relative group">
+                            <button class="flex items-center space-x-2 text-sm text-gray-300 hover:text-white transition">
+                                <img src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) if current_user.profile_picture else 'https://www.gravatar.com/avatar/0?d=mp' }}" alt="Profile" class="w-8 h-8 rounded-full border-2 border-gray-700">
+                                <span class="hidden sm:inline">{{ current_user.username }}</span>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 panel hidden group-hover:block text-sm z-10">
+                                <a href="{{ url_for('profile') }}" class="block px-4 py-2 hover:bg-gray-800 rounded-t-md">Profile</a>
+                                {% if current_user.role == 'organizer' %}
+                                    <a href="{{ url_for('create_event') }}" class="block px-4 py-2 hover:bg-gray-800">Create Event</a>
+                                {% endif %}
+                                <a href="{{ url_for('edit_profile') }}" class="block px-4 py-2 hover:bg-gray-800">Edit Profile</a>
+                                <form action="{{ url_for('logout') }}" method="POST" class="block">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-800 rounded-b-md text-red-400 hover:text-red-300">Logout</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-6 p-4 rounded-md {{ 'bg-red-900/50 border-red-500 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }} text-center text-sm">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if current_user.role == 'student' %}
+            <div class="panel p-4 sm:p-6 mb-8">
+                <form method="GET" action="{{ url_for('home') }}" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <label class="block font-medium mb-2 text-gray-400">Search</label>
+                            <input type="text" name="search" value="{{ search_query or '' }}" class="form-input" placeholder="Title, location...">
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-2 text-gray-400">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="all">All Categories</option>
+                                {% for cat in categories %}<option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-2 text-gray-400">Sort By</label>
+                            <select name="sort" class="form-select">
+                                <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Date</option>
+                                <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
+                                
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="btn btn-primary w-full">Apply Filters</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for event in events %}
+                    <div class="panel p-5 flex flex-col">
+                        <div class="flex justify-between items-start mb-3">
+                            <h2 class="text-lg font-semibold text-blue-400">{{ event.title }}</h2>
+                            <span class="status-badge status-{{ event.status|lower }}">{{ event.status|title }}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4 flex-grow">{{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}</p>
+                        <div class="text-sm space-y-2 mb-4 text-gray-400 border-t border-b border-gray-800 py-3">
+                            <p><i class="fas fa-map-marker-alt w-5 text-gray-500"></i> {{ event.location }}</p>
+                            <p><i class="fas fa-calendar-alt w-5 text-gray-500"></i> {{ event.date.strftime('%a, %b %d, %Y @ %I:%M %p') }}</p>
+                            <p><i class="fas fa-ticket-alt w-5 text-gray-500"></i> {{ event.remaining_tickets }}/{{ event.total_tickets }} available</p>
+                        </div>
+                        <div class="flex justify-between items-center mt-auto">
+                            <span class="text-lg font-bold text-green-400">₹{{ "%.2f"|format(event.price) }}</span>
+                            {% if current_user.role == 'student' %}
+                                {% if event.status == 'approved' and event.remaining_tickets > 0 %}
+                                    <a href="{{ url_for('book_event', event_id=event.id) }}" class="btn btn-primary text-sm">Book Now</a>
+                                {% else %}
+                                    <button disabled class="btn btn-secondary opacity-50 cursor-not-allowed text-sm">
+                                        {% if event.remaining_tickets <= 0 %}Sold Out{% else %}{{ event.status|title }}{% endif %}
+                                    </button>
+                                {% endif %}
+                            {% elif current_user.role == 'organizer' and event.organizer_id == current_user.id %}
+                                <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger-outline text-sm">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-span-full text-center py-12 panel">
+                        <p class="text-gray-500">No events found matching your criteria.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+    <script>
+        VANTA.WAVES({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x1a2c4a,
+            shininess: 25.00,
+            waveHeight: 15.00,
+            waveSpeed: 0.75,
+            zoom: 0.85
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Messages</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden; /* Prevent body scroll on mobile */
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .form-input {
+            background-color: #010409;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .message {
+            max-width: 75%;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            line-height: 1.5;
+        }
+        .message-sent {
+            margin-left: auto;
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-bottom-right-radius: 0.25rem;
+        }
+        .message-received {
+            margin-right: auto;
+            background-color: #21262d;
+            border-bottom-left-radius: 0.25rem;
+        }
+        .contact-list-item.active {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-left-color: var(--accent-primary);
+        }
+        .scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-primary) var(--bg-secondary);
+        }
+        .scroll-container::-webkit-scrollbar { width: 6px; }
+        .scroll-container::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        .scroll-container::-webkit-scrollbar-thumb { background-color: var(--border-primary); border-radius: 3px; }
+
+        /* Tab Styles */
+        .tab-button {
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <a href="{{ url_for('home') }}" class="text-2xl font-bold header-text">Encypherist</a>
+                <a href="{{ url_for('home') }}" class="text-sm text-gray-400 hover:text-white transition">← Back to Events</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 md:px-6 pt-20 md:pt-24 pb-4 md:pb-12 h-screen">
+        <div class="panel h-full flex md:flex-row flex-col overflow-hidden">
+            
+            <!-- Contacts Sidebar -->
+            <div id="contacts-sidebar" class="w-full md:w-1/3 border-r border-gray-800 flex-col 
+                {% if other_user %}hidden md:flex{% else %}flex{% endif %}">
+                
+                <!-- Search Bar -->
+                <div class="p-4 border-b border-gray-800">
+                    <form action="{{ url_for('messages') }}" method="GET" class="relative">
+                        <input type="text" name="search" placeholder="Search users..." class="form-input text-sm w-full pr-10" value="{{ search_query or '' }}">
+                        <button type="submit" class="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-accent-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-800">
+                    <button class="tab-button flex-1 active" data-tab="organizers">Organizers</button>
+                    <button class="tab-button flex-1" data-tab="students">Students</button>
+                </div>
+
+                <!-- Tab Panes -->
+                <div class="flex-1 overflow-y-hidden">
+                    <!-- Organizers List -->
+                    <div id="organizers" class="tab-pane active h-full">
+                        <div class="flex-1 scroll-container overflow-y-auto h-full">
+                            {% if organizer_conversations is not none %}
+                                {% for user_id, conv in organizer_conversations.items() %}
+                                <a href="{{ url_for('conversation', user_id=user_id) }}" class="block contact-list-item border-l-4 border-transparent p-4 hover:bg-gray-800 {% if other_user and other_user.id == user_id %}active{% endif %}">
+                                    <div class="flex items-center">
+                                        <img src="{{ url_for('static', filename='uploads/' + conv['user'].profile_picture) if conv['user'].profile_picture else 'https://www.gravatar.com/avatar/' + user_id|string + '?d=mp' }}" alt="{{ conv['user'].username }}" class="w-10 h-10 rounded-full">
+                                        <div class="ml-3 flex-1 overflow-hidden">
+                                            <div class="flex justify-between items-center">
+                                                <h3 class="font-semibold text-sm">{{ conv['user'].username }}</h3>
+                                                {% if conv['last_message'].timestamp.year > 1900 %}
+                                                <span class="text-xs text-gray-500">{{ conv['last_message'].timestamp.strftime('%H:%M') }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <p class="text-sm text-gray-400 truncate">{{ conv['last_message'].content }}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% else %}
+                                <p class="p-4 text-sm text-gray-500">No organizer conversations found.</p>
+                                {% endfor %}
+                            {% else %}
+                                <p class="p-4 text-sm text-red-400">Error loading organizers.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Students List -->
+                    <div id="students" class="tab-pane h-full">
+                         <div class="flex-1 scroll-container overflow-y-auto h-full">
+                            {% if student_conversations is not none %}
+                                {% for user_id, conv in student_conversations.items() %}
+                                <a href="{{ url_for('conversation', user_id=user_id) }}" class="block contact-list-item border-l-4 border-transparent p-4 hover:bg-gray-800 {% if other_user and other_user.id == user_id %}active{% endif %}">
+                                    <div class="flex items-center">
+                                        <img src="{{ url_for('static', filename='uploads/' + conv['user'].profile_picture) if conv['user'].profile_picture else 'https://www.gravatar.com/avatar/' + user_id|string + '?d=mp' }}" alt="{{ conv['user'].username }}" class="w-10 h-10 rounded-full">
+                                        <div class="ml-3 flex-1 overflow-hidden">
+                                            <div class="flex justify-between items-center">
+                                                <h3 class="font-semibold text-sm">{{ conv['user'].username }}</h3>
+                                                {% if conv['last_message'].timestamp.year > 1900 %}
+                                                <span class="text-xs text-gray-500">{{ conv['last_message'].timestamp.strftime('%H:%M') }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <p class="text-sm text-gray-400 truncate">{{ conv['last_message'].content }}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% else %}
+                                <p class="p-4 text-sm text-gray-500">No student conversations found.</p>
+                                {% endfor %}
+                            {% else %}
+                                <p class="p-4 text-sm text-red-400">Error loading students.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div id="chat-area" class="w-full md:w-2/3 flex-col 
+                {% if other_user %}flex{% else %}hidden md:flex{% endif %}">
+                
+                {% if other_user %}
+                <div class="p-4 border-b border-gray-800 flex items-center">
+                    <button id="back-to-contacts" class="mr-4 md:hidden text-gray-400 hover:text-white">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <img src="{{ url_for('static', filename='uploads/' + other_user.profile_picture) if other_user.profile_picture else 'https://www.gravatar.com/avatar/' + other_user.id|string + '?d=mp' }}" alt="{{ other_user.username }}" class="w-10 h-10 rounded-full">
+                    <div class="ml-3">
+                        <h2 class="font-semibold">{{ other_user.username }}</h2>
+                    </div>
+                </div>
+
+                <div id="chat-box" class="flex-1 p-6 overflow-y-auto scroll-container">
+                    {% if messages is not none %}
+                        <div class="flex flex-col space-y-4">
+                            {% for message in messages %}
+                            <div class="message {% if message.sender_id == current_user.id %}message-sent{% else %}message-received{% endif %}">
+                                <p class="text-sm">{{ message.content }}</p>
+                                <p class="text-xs opacity-70 mt-1 text-right">{{ message.timestamp.strftime('%H:%M') }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                            <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-red-300">Message Load Failed</h3>
+                            <p class="text-sm">We couldn't retrieve the conversation history.</p>
+                            <p class="text-xs mt-1">Please try again later or select a different conversation.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="p-4 border-t border-gray-800">
+                    <form action="{{ url_for('send_message', user_id=other_user.id) }}" method="POST" class="flex items-center space-x-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="text" name="content" placeholder="Type your message..." class="form-input flex-1" required autocomplete="off">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="flex-1 flex items-center justify-center">
+                    <div class="text-center text-gray-500">
+                        {% with flashed_messages = get_flashed_messages(with_categories=true) %}
+                            {% if flashed_messages %}
+                                {% for category, message in flashed_messages %}
+                                    <div class="mb-4 p-4 rounded-md {{ 'bg-red-900/50 border-red-600 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }}">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        <i class="fas fa-comments text-4xl mb-4"></i>
+                        <p>Select a conversation or search for a user to start messaging</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab-button');
+            const panes = document.querySelectorAll('.tab-pane');
+            const contactsSidebar = document.getElementById('contacts-sidebar');
+            const chatArea = document.getElementById('chat-area');
+            const backButton = document.getElementById('back-to-contacts');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    panes.forEach(p => p.classList.remove('active'));
+
+                    const targetPaneId = this.dataset.tab;
+                    const targetPane = document.getElementById(targetPaneId);
+                    
+                    this.classList.add('active');
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                    }
+                });
+            });
+
+            if (backButton) {
+                backButton.addEventListener('click', function() {
+                    chatArea.classList.remove('flex');
+                    chatArea.classList.add('hidden');
+                    
+                    contactsSidebar.classList.remove('hidden');
+                    contactsSidebar.classList.add('flex');
+                });
+            }
+
+            const chatBox = document.getElementById('chat-box');
+            if(chatBox) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>

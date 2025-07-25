@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Using the variables and font you provided */
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            border-bottom: 1px solid var(--border-primary);
+            backdrop-filter: blur(8px); /* Added for a modern feel on supported browsers */
+        }
+        .header-text { color: var(--accent-primary); }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid var(--border-primary);
+            display: block;
+            text-align: center;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+        .btn-primary:hover {
+             background-color: #79bbff;
+        }
+        .btn-secondary {
+            background-color: #21262d;
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover {
+            background-color: #30363d;
+            border-color: #8b949e;
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(88, 166, 255, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            flex-shrink: 0; /* Prevents badge from shrinking on flex layouts */
+        }
+        .tab {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+        .tab:hover:not(.active) {
+            background-color: #21262d;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl sm:text-2xl font-semibold header-text">Encypherist</h1>
+                <a href="{{ url_for('home') }}" class="hover:text-accent-primary transition text-sm text-right">Back to Events</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 pt-24 pb-12">
+        <div class="panel p-4 sm:p-6 md:p-8">
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="w-full md:w-1/4 text-center">
+                    <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) if user.profile_picture else 'https://www.gravatar.com/avatar/0?d=mp' }}"
+                         alt="Profile Picture"
+                         class="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-4 border-2 border-border-primary">
+                    <h2 class="text-xl md:text-2xl font-bold">{{ user.username }}</h2>
+                    <p class="text-text-secondary">{{ user.role|title }}</p>
+                    <div class="space-y-2 mt-6 text-sm max-w-xs mx-auto">
+                        <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Edit Profile</a>
+                        <a href="{{ url_for('reset_password') }}" class="btn btn-secondary">Change Password</a>
+                        <a href="{{ url_for('notification_preferences') }}" class="btn btn-secondary">Settings</a>
+                    </div>
+                </div>
+
+                <div class="flex-grow md:border-l md:border-border-primary md:pl-8">
+                    <div class="flex flex-wrap gap-2 mb-6 border-b border-border-primary">
+                        <button class="tab active" onclick="showTab('bookings')">My Bookings</button>
+                        {% if user.role == 'organizer' %}
+                            <button class="tab" onclick="showTab('events')">My Events</button>
+                        {% endif %}
+                    </div>
+
+                    <div id="bookings" class="space-y-4">
+                        {% for booking in bookings %}
+                            <div class="panel p-4">
+                                <h3 class="font-semibold text-accent-primary">{{ booking.event.title }}</h3>
+                                <p class="text-sm text-text-secondary">Booked on: {{ booking.booking_date.strftime('%B %d, %Y') }}</p>
+                                <a href="{{ url_for('ticket', event_id=booking.event.id) }}" class="text-xs text-accent-primary hover:underline mt-2 inline-block">View Ticket</a>
+                            </div>
+                        {% else %}
+                             <p class="text-text-secondary">No bookings found.</p>
+                        {% endfor %}
+                    </div>
+
+                    {% if user.role == 'organizer' %}
+                        <div id="events" class="space-y-4 hidden">
+                            {% for event in events %}
+                                <div class="panel p-4">
+                                    <div class="flex justify-between items-start gap-4">
+                                        <div>
+                                            <h3 class="font-semibold text-accent-primary">{{ event.title }}</h3>
+                                            <p class="text-sm text-text-secondary">{{ event.date.strftime('%B %d, %Y') }}</p>
+                                        </div>
+                                        <span class="badge">{{ event.status|title }}</span>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-text-secondary">No events created yet.</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab content panels
+            document.querySelectorAll('[id^="bookings"], [id^="events"]').forEach(tabContent => {
+                if (tabContent) tabContent.classList.add('hidden');
+            });
+            
+            // Show the selected tab content
+            const activeTabContent = document.getElementById(tabName);
+            if (activeTabContent) activeTabContent.classList.remove('hidden');
+
+            // Update the active state for tab buttons
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>
+```

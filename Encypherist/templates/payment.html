@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Payment - {{ event.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            width: 100%;
+            max-width: 380px;
+        }
+        .header-text { color: var(--accent-primary); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen px-4">
+    <div class="panel p-6">
+        <nav class="mb-4">
+            <a href="{{ url_for('home') }}" class="text-sm text-gray-500 hover:text-white transition-colors">&larr; Back to Events</a>
+        </nav>
+
+        <div class="p-4 bg-gray-900/50 rounded-lg text-center">
+            <h2 class="text-xl font-semibold header-text">{{ event.title }}</h2>
+            <p class="text-gray-400 text-sm">{{ event.date.strftime('%B %d, %Y') }}</p>
+            <p class="text-2xl font-bold mt-2">₹{{ '{:,.2f}'.format(event.price) }}</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="p-3 {{ 'bg-red-900/50 text-red-300' if category == 'error' else 'bg-blue-900/50 text-blue-300' }} rounded-lg text-sm mt-4" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if event.payment_qr %}
+        <div class="mt-5 text-center">
+            <h3 class="text-sm font-semibold mb-2 text-gray-400">Pay via QR Code</h3>
+            <img src="{{ event.payment_qr }}" alt="Payment QR Code" class="mx-auto rounded-lg border border-gray-700">
+        </div>
+        {% endif %}
+
+        <div class="mt-5 text-center">
+            <h3 class="text-sm font-semibold mb-2 text-gray-400">Or Pay Securely Online</h3>
+            <div id="paypal-button-container" class="w-full"></div>
+        </div>
+
+        <script src="https://www.paypal.com/sdk/js?client-id={{ client_id }}&currency=USD"></script>
+        <script>
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: '{{ event.price }}'
+                            }
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        window.location.href = "{{ url_for('process_payment', event_id=event.id) }}?paymentId=" + data.orderID + "&PayerID=" + data.payerID;
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal Error:', err);
+                    alert('An error occurred with your payment.');
+                }
+            }).render('#paypal-button-container');
+        </script>
+    </div>
+</body>
+</html>

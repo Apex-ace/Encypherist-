@@ -1,0 +1,18 @@
+services:
+  # A web service for our Flask application
+  - type: web
+    name: moon-flask-app
+    env: python
+    plan: free # You can choose a paid plan for more resources
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: psql 
+          name: my-database 
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true 
+      - key: PYTHON_VERSION
+        value: 3.10.0 

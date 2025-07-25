@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist - Activity Log</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .pagination a, .pagination span {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            background-color: var(--bg-secondary);
+            transition: all 0.2s ease;
+        }
+        .pagination a:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        .pagination .active {
+            background-color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ url_for('admin_dashboard') }}" class="text-2xl font-bold header-text">Admin</a>
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{{ url_for('admin_events') }}" class="text-sm text-gray-300 hover:text-white transition">Events</a>
+                    <a href="{{ url_for('admin_users') }}" class="text-sm text-gray-300 hover:text-white transition">Users</a>
+                    <a href="{{ url_for('activity_log') }}" class="text-sm text-white font-semibold">Activity Log</a>
+                    <a href="{{ url_for('home') }}" class="text-sm text-gray-300 hover:text-white transition">View Site</a>
+                    <form action="{{ url_for('logout') }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-sm text-gray-300 hover:text-white transition">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-md {{ 'bg-red-900/50 border-red-600 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }} text-center">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="panel p-4 sm:p-6">
+            <h2 class="text-2xl font-bold header-text mb-6">Activity Log</h2>
+
+            <div class="space-y-4">
+                {% for activity in activities.items %}
+                <div class="panel p-4 border-l-2 border-gray-800">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-2">
+                        <p class="font-semibold text-sm sm:text-base">{{ activity.description }}</p>
+                        <span class="text-xs text-gray-500 mt-1 sm:mt-0">{{ activity.timestamp.strftime('%b %d, %Y @ %H:%M') }}</span>
+                    </div>
+                    <div class="flex items-center text-xs text-gray-400 space-x-4">
+                        <span>User: {{ activity.user.username }}</span>
+                        <span>Type: {{ activity.activity_type }}</span>
+                        {% if activity.ip_address %}
+                        <span>IP: {{ activity.ip_address }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-center text-gray-500 py-8">No activities recorded yet.</p>
+                {% endfor %}
+            </div>
+
+            {% if activities.pages > 1 %}
+            <div class="mt-8 flex justify-center">
+                <div class="pagination flex items-center space-x-2 text-sm">
+                    {% if activities.has_prev %}
+                    <a href="{{ url_for('activity_log', page=activities.prev_num) }}">
+                        &laquo; Prev
+                    </a>
+                    {% endif %}
+
+                    {% for page_num in activities.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == activities.page %}
+                            <span class="active">{{ page_num }}</span>
+                            {% else %}
+                            <a href="{{ url_for('activity_log', page=page_num) }}">{{ page_num }}</a>
+                            {% endif %}
+                        {% else %}
+                            <span class="px-3">...</span>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if activities.has_next %}
+                    <a href="{{ url_for('activity_log', page=activities.next_num) }}">
+                        Next &raquo;
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

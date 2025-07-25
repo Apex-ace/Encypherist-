@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Notifications</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(88, 166, 255, 0.1);
+            color: var(--accent-primary);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .pagination-btn {
+            background-color: #21262d;
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        .pagination-btn[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ url_for('home') }}" class="text-2xl font-bold header-text">Encypherist</a>
+                <a href="{{ url_for('home') }}" class="text-sm text-gray-400 hover:text-white transition">← Back to Events</a>
+            </div>
+        </div>
+    </nav>
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        <div class="panel p-6 sm:p-8 max-w-4xl mx-auto">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6">
+                <h1 class="text-2xl font-bold header-text mb-4 sm:mb-0">Notifications</h1>
+                <a href="{{ url_for('notification_preferences') }}" class="text-sm text-blue-400 hover:underline">
+                    Settings
+                </a>
+            </div>
+            <div class="space-y-4">
+                {% for notification in notifications.items %}
+                    <div class="border-b border-gray-800 pb-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="badge">{{ notification.type|title }}</span>
+                            <span class="text-xs sm:text-sm text-gray-500">{{ notification.timestamp.strftime('%b %d, %I:%M %p') }}</span>
+                        </div>
+                        <h3 class="text-lg font-semibold">{{ notification.title }}</h3>
+                        <p class="text-gray-400 text-sm">{{ notification.content }}</p>
+                    </div>
+                {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-bell-slash text-4xl text-gray-600 mb-4"></i>
+                        <p class="text-gray-500">No notifications yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if notifications.pages > 1 %}
+                <div class="flex justify-center items-center space-x-4 mt-8 text-sm">
+                    <a href="{{ url_for('notifications', page=notifications.prev_num) if notifications.has_prev else '#' }}" class="pagination-btn" {% if not notifications.has_prev %}disabled{% endif %}>Previous</a>
+                    <span class="text-gray-400">Page {{ notifications.page }} of {{ notifications.pages }}</span>
+                    <a href="{{ url_for('notifications', page=notifications.next_num) if notifications.has_next else '#' }}" class="pagination-btn" {% if not notifications.has_next %}disabled{% endif %}>Next</a>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

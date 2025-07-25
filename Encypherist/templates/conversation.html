@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist :: Conversation with {{ other_user.username }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .message {
+            max-width: 75%;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            line-height: 1.5;
+        }
+        .message-sent {
+            margin-left: auto;
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border-bottom-right-radius: 0.25rem;
+        }
+        .message-received {
+            margin-right: auto;
+            background-color: #21262d;
+            border-bottom-left-radius: 0.25rem;
+        }
+        .message-input {
+            background-color: #010409;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .message-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+        .btn-send {
+            background-color: var(--accent-primary);
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            color: var(--bg-primary);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-send:hover { background-color: #80baff; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('messages') }}" class="text-gray-400 hover:text-white transition">
+                        <i class="fas fa-arrow-left"></i>
+                        <span class="hidden sm:inline ml-2">Back</span>
+                    </a>
+                    <h1 class="text-lg font-bold header-text">{{ other_user.username }}</h1>
+                </div>
+                <div>
+                    <a href="{{ url_for('home') }}" class="hover:text-blue-400 transition text-sm">Events</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32">
+        <div class="space-y-4">
+            {% for message in messages %}
+                <div class="message {% if message.sender_id == current_user.id %}message-sent{% else %}message-received{% endif %}">
+                    <p class="text-sm">{{ message.content }}</p>
+                    <p class="text-xs opacity-70 mt-1 text-right">
+                        {{ message.timestamp.strftime('%I:%M %p') }}
+                    </p>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-500">No messages yet. Start the conversation!</p>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 p-4 nav-bar border-t border-b-0">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <form action="{{ url_for('send_message', user_id=other_user.id) }}" method="POST" class="flex gap-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="content" class="message-input" placeholder="Type your message..." required autocomplete="off">
+                <button type="submit" class="btn-send">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    </script>
+</body>
+</html>

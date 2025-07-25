@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypherist - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161b22;
+            --border-primary: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-primary: #58a6ff;
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+        }
+        .nav-bar {
+            background-color: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .header-text { color: var(--accent-primary); }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .btn-primary:hover { background-color: #80baff; }
+        .stats-card {
+             background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .stats-card:hover {
+            border-color: var(--accent-primary);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="fixed w-full z-50 nav-bar">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ url_for('admin_dashboard') }}" class="text-2xl font-bold header-text">Admin</a>
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{{ url_for('admin_events') }}" class="text-sm text-gray-300 hover:text-white transition">Events</a>
+                    <a href="{{ url_for('admin_users') }}" class="text-sm text-gray-300 hover:text-white transition">Users</a>
+                    <a href="{{ url_for('activity_log') }}" class="text-sm text-gray-300 hover:text-white transition">Activity Log</a>
+                    <a href="{{ url_for('home') }}" class="text-sm text-gray-300 hover:text-white transition">View Site</a>
+                    <form action="{{ url_for('logout') }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-sm text-gray-300 hover:text-white transition">Logout</button>
+                    </form>
+                </div>
+                <div class="md:hidden">
+                    <!-- Mobile Menu Button can be added here -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-md {{ 'bg-red-900/50 border-red-600 text-red-300' if category == 'error' else 'bg-blue-900/50 border-blue-600 text-blue-300' }} text-center">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stats-card p-6">
+                <h3 class="text-sm font-semibold text-gray-400 mb-2">Total Users</h3>
+                <p class="text-3xl font-bold header-text">{{ total_users }}</p>
+            </div>
+            <div class="stats-card p-6">
+                <h3 class="text-sm font-semibold text-gray-400 mb-2">Total Events</h3>
+                <p class="text-3xl font-bold header-text">{{ total_events }}</p>
+            </div>
+            <div class="stats-card p-6">
+                <h3 class="text-sm font-semibold text-gray-400 mb-2">Total Bookings</h3>
+                <p class="text-3xl font-bold header-text">{{ total_bookings }}</p>
+            </div>
+            <div class="stats-card p-6">
+                <h3 class="text-sm font-semibold text-gray-400 mb-2">Pending Events</h3>
+                <p class="text-3xl font-bold header-text">{{ pending_events }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="panel p-6">
+                <h3 class="text-lg font-semibold mb-4">Events by Category</h3>
+                <canvas id="eventsByCategoryChart"></canvas>
+            </div>
+            <div class="panel p-6">
+                <h3 class="text-lg font-semibold mb-4">Bookings Timeline</h3>
+                <canvas id="bookingsTimelineChart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="panel p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Recent Activity</h3>
+                    <a href="{{ url_for('activity_log') }}" class="text-sm text-blue-400 hover:text-blue-300">View All</a>
+                </div>
+                <div class="space-y-4">
+                    {% for activity in recent_activities %}
+                    <div class="border-l-2 border-gray-800 pl-4">
+                        <p class="text-sm text-gray-400">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        <p class="font-medium">{{ activity.description }}</p>
+                        <p class="text-xs text-gray-500">Type: {{ activity.activity_type }}</p>
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No recent activity.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="panel p-6">
+                <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+                <div class="space-y-4">
+                    <a href="{{ url_for('admin_events') }}" class="btn-primary block">Manage Events</a>
+                    <a href="{{ url_for('admin_users') }}" class="btn-primary block">Manage Users</a>
+                    <a href="{{ url_for('generate_report') }}?type=events" class="btn-primary block">Generate Report</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        Chart.defaults.color = 'rgba(139, 148, 158, 1)'; // text-secondary
+        Chart.defaults.borderColor = 'rgba(48, 54, 61, 1)'; // border-primary
+
+        // Events by Category Chart
+        const categoryCtx = document.getElementById('eventsByCategoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ events_by_category|map(attribute=0)|list|tojson }},
+                datasets: [{
+                    data: {{ events_by_category|map(attribute=1)|list|tojson }},
+                    backgroundColor: [
+                        'rgba(88, 166, 255, 0.7)',
+                        'rgba(63, 133, 203, 0.7)',
+                        'rgba(38, 103, 158, 0.7)',
+                        'rgba(22, 78, 122, 0.7)',
+                        'rgba(12, 57, 92, 0.7)'
+                    ],
+                    borderColor: 'var(--bg-secondary)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Bookings Timeline Chart
+        const timelineCtx = document.getElementById('bookingsTimelineChart').getContext('2d');
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: {{ bookings_by_date|map(attribute=0)|list|tojson }},
+                datasets: [{
+                    label: 'Bookings',
+                    data: {{ bookings_by_date|map(attribute=1)|list|tojson }},
+                    borderColor: 'rgba(88, 166, 255, 1)',
+                    backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    },
+                }
+            }
+        });
+    </script>
+</body>
+</html>
