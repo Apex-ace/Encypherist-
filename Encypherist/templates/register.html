@@ -114,16 +114,11 @@
             <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-0 gap-4">
                     <label class="role-option" onclick="selectRole('student')">
                         <input type="radio" name="role" value="student" class="hidden" required>
                         <h3 class="text-lg font-semibold mb-2">Student</h3>
                         <p class="text-sm text-gray-400">Book and attend</p>
-                    </label>
-                    <label class="role-option" onclick="selectRole('organizer')">
-                        <input type="radio" name="role" value="organizer" class="hidden" required>
-                        <h3 class="text-lg font-semibold mb-2">Organizer</h3>
-                        <p class="text-sm text-gray-400">Create and manage</p>
                     </label>
                 </div>
 
